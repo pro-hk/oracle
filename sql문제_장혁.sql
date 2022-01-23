@@ -385,31 +385,94 @@ from emp e join salgrade s on (sal between losal and hisal)
 group by grade
 order by grade;
 
--- 77. 급여 등급이 4등급인 사원들의 사원번호, 이름, 급여, 근무부서이름, 근무지역을 가져온다.
+-- Q77 급여 등급이 4등급인 사원들의 사원번호, 이름, 급여, 근무부서이름, 근무지역을 가져온다.
+select empno, ename, sal, dname, loc, grade
+from emp e join dept d on (e.deptno = d.deptno), salgrade s
+where grade = 4
+and sal between losal and hisal;
 
---(hint) self join 이용
---78. SMITH 사원의 사원번호, 이름, 직속상관 이름을 가져온다.
---79. FORD 사원 밑에서 일하는 사원들의 사원번호, 이름, 직무를 가져온다.
---80. SMITH 사원의 직속상관과 동일한 직무를 가지고 있는 사원들의 사원번호, 이름, 직무를 가져온다.
---
---(hint) outer join 이용
---81. 각 사원의 이름, 사원번호, 직장상사 이름을 가져온다. 단 직속상관이 없는 사원도 가져온다.
---82. 모든 부서의 소속 사원의 근무부서명, 사원번호, 사원이름, 급여를 가져온다
---
---
---(hint) subquery
---83. SMITH사원이 근무하고 있는 부서의 이름을 가져온다.
---84. SMITH와 같은 부서에 근무하고 있는 사원들의 사원번호, 이름, 급여액, 부서이름을 가져온다.
---85. MARTIN과 같은 직무를 가지고 있는 사원들의 사원번호, 이름, 직무를 가져온다.
---86. ALLEN과 같은 직속상관을 가진 사원들의 사원번호, 이름, 직속상관이름을 가져온다.
---87. WARD와 같은 부서에 근무하고 있는 사원들의 사원번호, 이름, 부서번호를 가져온다.
---88. SALESMAN의 평균 급여보다 많이 받는 사원들의 사원번호, 이름, 급여를 가져온다.
---89. DALLAS 지역에 근무하는 사원들의 평균 급여를 가져온다.
---90. SALES 부서에 근무하는 사원들의 사원번호, 이름, 근무지역을 가져온다
---91. CHICAGO 지역에 근무하는 사원들 중 BLAKE이 직속상관인 사원들의 사원번호, 이름, 직무를 가져온다.	
---
---
---(hint) 결과가 하나 이상인 subquery는 in,some,any , all  을 이용한다.
---92. 3000 이상의 급여를 받는 사원들과 같은 부서에 근무하고 있는 사원의 사원번호, 이름, 급여를 가져온다
---93. 직무가 CLERK인 사원과 동일한 부서에 근무하고 있는 사원들의 사원번호, 이름, 입사일 가져온다.
+-- Q78 SMITH 사원의 사원번호, 이름, 직속상관 이름을 가져온다.
+select e1.empno, e1.ename, e1.mgr, e2.ename
+from emp e1, emp e2
+where e1.mgr = e2.empno
+and e1.ename = 'SMITH';
 
+-- Q79 FORD 사원 밑에서 일하는 사원들의 사원번호, 이름, 직무를 가져온다.
+select e1.empno, e1.ename, e1.job
+from emp e1, emp e2
+where e2.ename = 'FORD'
+and e1.mgr = e2.empno;
+
+-- Q8 SMITH 사원의 직속상관과 동일한 직무를 가지고 있는 사원들의 사원번호, 이름, 직무를 가져온다.
+select e1.empno, e1.ename, e1.job
+from emp e1 join emp e2 on (e2.mgr = e1.empno)
+where e1.job = (select e3.job
+             from emp e3, emp e4
+             where e4.ename = 'SMITH'
+             and e3.empno = e4.mgr);
+
+-- Q81 각 사원의 이름, 사원번호, 직장상사 이름을 가져온다. 단 직속상관이 없는 사원도 가져온다.
+select e1.ename, e1.empno, e2.ename as mgr_name
+from emp e1, emp e2
+where e1.mgr = e2.empno(+);
+
+-- Q82 모든 부서의 소속 사원의 근무부서명, 사원번호, 사원이름, 급여를 가져온다
+select dname, e.deptno, ename, sal
+from emp e, dept d
+where e.deptno(+) = d.deptno;
+
+-- Q83 SMITH사원이 근무하고 있는 부서의 이름을 가져온다.
+select dname
+from dept
+where deptno = (select deptno from emp where ename = 'SMITH');
+
+-- Q84 SMITH와 같은 부서에 근무하고 있는 사원들의 사원번호, 이름, 급여액, 부서이름을 가져온다.
+select empno, ename, sal, dname
+from emp e join dept d on (e.deptno = d.deptno)
+where d.deptno = (select deptno from emp where ename = 'SMITH');
+
+-- Q85 MARTIN과 같은 직무를 가지고 있는 사원들의 사원번호, 이름, 직무를 가져온다.
+select empno, ename, job
+from emp e 
+where job = (select job from emp where ename = 'MARTIN');
+
+-- Q86 ALLEN과 같은 직속상관을 가진 사원들의 사원번호, 이름, 직속상관이름을 가져온다.
+select e1.empno, e1.ename, e2.ename as mgr_name
+from emp e1 join emp e2 on(e1.mgr = e2.empno)
+where e1.mgr = (select mgr from emp where ename = 'ALLEN');
+
+-- Q87 WARD와 같은 부서에 근무하고 있는 사원들의 사원번호, 이름, 부서번호를 가져온다.
+select empno, ename, deptno
+from emp
+where deptno = (select deptno from emp where ename = 'WARD');
+
+-- Q8. SALESMAN의 평균 급여보다 많이 받는 사원들의 사원번호, 이름, 급여를 가져온다.
+select empno, ename, job
+from emp
+where sal > (select avg(sal) from emp where job='SALESMAN');
+
+-- Q89 DALLAS 지역에 근무하는 사원들의 평균 급여를 가져온다.
+select trunc(avg(sal)) as avg_sal
+from emp
+where deptno = (select deptno from dept where loc='DALLAS');
+
+-- Q90 SALES 부서에 근무하는 사원들의 사원번호, 이름, 근무지역을 가져온다
+select empno, ename, loc
+from emp e join dept d on (e.deptno=d.deptno)
+where e.deptno = (select deptno from dept where dname='SALES'); 
+
+-- Q91 CHICAGO 지역에 근무하는 사원들 중 BLAKE이 직속상관인 사원들의 사원번호, 이름, 직무를 가져온다.	
+select empno, ename, job
+from emp
+where deptno = (select deptno from dept where loc='CHICAGO')
+and mgr = (select empno from emp where ename='BLAKE');
+
+-- Q92 3000 이상의 급여를 받는 사원들과 같은 부서에 근무하고 있는 사원의 사원번호, 이름, 급여를 가져온다
+select empno, ename, sal
+from emp
+where deptno = any(select deptno from emp where sal >= 3000);
+
+-- Q93 직무가 CLERK인 사원과 동일한 부서에 근무하고 있는 사원들의 사원번호, 이름, 입사일 가져온다.
+select empno, ename, hiredate
+from emp
+where deptno = any(select deptno from emp where job = 'CLERK');
